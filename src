@@ -1,0 +1,1313 @@
+import javax.swing.*;
+import java.util.List;
+import java.util.*;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.table.DefaultTableModel;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Queue;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+public class Main {
+    static class Process {
+        int id, arrivalTime, burstTime, completionTime, turnAroundTime, waitingTime, remainingTime, priority;
+
+        public Process(int id, int arrivalTime, int burstTime) {
+            this.id = id;
+            this.arrivalTime = arrivalTime;
+            this.burstTime = burstTime;
+            this.remainingTime = burstTime;
+            this.priority = Integer.MAX_VALUE;
+            this.completionTime = 0;
+            this.turnAroundTime = 0;
+            this.waitingTime = 0;
+        }
+    }
+
+
+    public static void main(String[] args) {
+
+        JFrame frame = new JFrame("Operating System Algorithm Calculator: IT-22002");
+        frame.setSize(1000, 700);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new BorderLayout());
+
+        JLabel titleLabel = new JLabel("Operating System Algorithm Calculator", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Calibri", Font.BOLD, 20));
+        frame.add(titleLabel, BorderLayout.NORTH);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setDividerLocation(700);
+        frame.add(splitPane, BorderLayout.CENTER);
+
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        CardLayout cardLayout = new CardLayout();
+        JPanel algorithmPanels = new JPanel(cardLayout);
+
+        JTextArea outputArea = new JTextArea();
+        outputArea.setEditable(false);
+        outputArea.setFont(new Font("Calibri", Font.PLAIN, 15));
+        JScrollPane outputScrollPane = new JScrollPane(outputArea);
+
+        JPanel selectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        String[] categories = {"Algorithms","Process Scheduling", "Disk Scheduling", "Page Replacement", "Banker's Algorithm", "Memory Allocation"};
+        JComboBox<String> categoryBox = new JComboBox<>(categories);
+        selectionPanel.add(new JLabel("Select Algorithm:"));
+        selectionPanel.add(categoryBox);
+
+        leftPanel.add(selectionPanel, BorderLayout.NORTH);
+
+        JPanel processPanel = new JPanel(new GridLayout(7, 2, 10, 10));
+        processPanel.setBorder(BorderFactory.createTitledBorder("Process Scheduling"));
+        processPanel.setBackground(new Color(255, 192, 203));
+
+        JLabel processAlgoLabel = new JLabel("Choose Algorithm:");
+        String[] processAlgos = {
+                "First Come First Serve (Non-Preemptive)",
+                "Priority (Preemptive)",
+                "Priority (Non-Preemptive)",
+                "Shortest Job First (Preemptive)",
+                "Shortest Job First (Non-Preemptive)",
+                "Round Robin (Preemptive)"
+        };
+        JComboBox<String> processAlgoBox = new JComboBox<>(processAlgos);
+
+        JLabel processNumLabel = new JLabel("Enter Number of Processes:");
+        JTextField processNumField = new JTextField();
+
+        JLabel arrivalTimeLabel = new JLabel("Enter Arrival Times (comma-separated):");
+        JTextField arrivalTimeField = new JTextField();
+
+        JLabel burstTimeLabel = new JLabel("Enter Burst Times (comma-separated):");
+        JTextField burstTimeField = new JTextField();
+
+        JLabel quantumTimeLabel = new JLabel("Enter Quantum Time (if applicable):");
+        JTextField quantumTimeField = new JTextField();
+
+        JLabel priorityLabel = new JLabel("Enter Priority (if applicable):");
+        JTextField priorityField = new JTextField();
+
+        JButton calculateProcessButton = new JButton("Calculate");
+
+        processPanel.add(processAlgoLabel);
+        processPanel.add(processAlgoBox);
+        processPanel.add(processNumLabel);
+        processPanel.add(processNumField);
+        processPanel.add(arrivalTimeLabel);
+        processPanel.add(arrivalTimeField);
+        processPanel.add(burstTimeLabel);
+        processPanel.add(burstTimeField);
+        processPanel.add(quantumTimeLabel);
+        processPanel.add(quantumTimeField);
+        processPanel.add(priorityLabel);
+        processPanel.add(priorityField);
+        processPanel.add(new JLabel());
+        processPanel.add(calculateProcessButton);
+
+        JPanel diskPanel = new JPanel(new GridLayout(4, 2, 10, 10));
+        diskPanel.setBorder(BorderFactory.createTitledBorder("Disk Scheduling"));
+        diskPanel.setBackground(new Color(230, 230, 250));
+
+        JLabel diskAlgoLabel = new JLabel("Choose Algorithm:");
+        String[] diskAlgos = {
+                "First Come First Serve (FCFS)",
+                "Shortest Seek Time First (SSTF)",
+                "SCAN(From left to right)",
+                "SCAN(From right to left)",
+                "C-SCAN(From left to right)",
+                "C-SCAN(From right to left)",
+                "LOOK(From left to right)",
+                "LOOK(From right to left)",
+                "C-LOOK(From left to right)",
+                "C-LOOK(From right to left)",
+        };
+        JComboBox<String> diskAlgoBox = new JComboBox<>(diskAlgos);
+
+        JLabel requestSeqLabel = new JLabel("Enter Request Sequence (comma-separated):");
+        JTextField requestSeqField = new JTextField();
+
+        JLabel headPosLabel = new JLabel("Enter Initial Head Position:");
+        JTextField headPosField = new JTextField();
+
+        JLabel endDiskLabel = new JLabel("End Disk:");
+        JTextField endDiskField = new JTextField(5);
+
+
+        JButton calculateDiskButton = new JButton("Calculate");
+
+        diskPanel.add(diskAlgoLabel);
+        diskPanel.add(diskAlgoBox);
+        diskPanel.add(requestSeqLabel);
+        diskPanel.add(requestSeqField);
+        diskPanel.add(headPosLabel);
+        diskPanel.add(headPosField);
+        diskPanel.add(endDiskLabel);
+        diskPanel.add(endDiskField);
+        diskPanel.add(new JLabel());
+        diskPanel.add(calculateDiskButton);
+
+        JPanel pagePanel = new JPanel(new GridLayout(4, 2, 10, 10));
+        pagePanel.setBorder(BorderFactory.createTitledBorder("Page Replacement"));
+        pagePanel.setBackground(new Color(255, 218, 170));
+
+        JLabel pageAlgoLabel = new JLabel("Choose Algorithm:");
+        String[] pageAlgos = {
+                "First In First Out (FIFO)",
+                "Optimal",
+                "Least Recently Used (LRU)"
+        };
+        JComboBox<String> pageAlgoBox = new JComboBox<>(pageAlgos);
+
+        JLabel pageRefSeqLabel = new JLabel("Enter Page Reference String (comma-separated):");
+        JTextField pageRefSeqField = new JTextField();
+
+        JLabel numFramesLabel = new JLabel("Enter Number of Frames:");
+        JTextField numFramesField = new JTextField();
+
+        JButton calculatePageButton = new JButton("Calculate");
+
+        pagePanel.add(pageAlgoLabel);
+        pagePanel.add(pageAlgoBox);
+        pagePanel.add(pageRefSeqLabel);
+        pagePanel.add(pageRefSeqField);
+        pagePanel.add(numFramesLabel);
+        pagePanel.add(numFramesField);
+        pagePanel.add(new JLabel());
+        pagePanel.add(calculatePageButton);
+
+        JPanel bankerPanel = new JPanel(new GridLayout(7, 2, 10, 10));
+        bankerPanel.setBorder(BorderFactory.createTitledBorder("Banker's Algorithm"));
+        bankerPanel.setBackground(new Color(240, 230, 140));
+
+        JLabel numProcessesLabel = new JLabel("Enter Number of Processes:");
+        JTextField numProcessesField = new JTextField();
+
+        JLabel numResourcesLabel = new JLabel("Enter Number of Resources:");
+        JTextField numResourcesField = new JTextField();
+
+        JLabel allocationMatrixLabel = new JLabel("Enter Allocation Matrix (comma-separated rows):");
+        JTextField allocationMatrixField = new JTextField();
+
+        JLabel maxMatrixLabel = new JLabel("Enter Max Matrix (comma-separated rows):");
+        JTextField maxMatrixField = new JTextField();
+
+        JLabel availableResourcesLabel = new JLabel("Enter Available Resources:");
+        JTextField availableResourcesField = new JTextField();
+
+        JButton calculateBankerButton = new JButton("Calculate");
+
+        bankerPanel.add(numProcessesLabel);
+        bankerPanel.add(numProcessesField);
+        bankerPanel.add(numResourcesLabel);
+        bankerPanel.add(numResourcesField);
+        bankerPanel.add(allocationMatrixLabel);
+        bankerPanel.add(allocationMatrixField);
+        bankerPanel.add(maxMatrixLabel);
+        bankerPanel.add(maxMatrixField);
+        bankerPanel.add(availableResourcesLabel);
+        bankerPanel.add(availableResourcesField);
+        bankerPanel.add(new JLabel());
+        bankerPanel.add(calculateBankerButton);
+
+
+        JPanel memoryPanel = new JPanel(new GridLayout(4, 2, 10, 10));
+        memoryPanel.setBorder(BorderFactory.createTitledBorder("Memory Allocation"));
+        memoryPanel.setBackground(new Color(255, 255, 224));
+
+        JLabel memAlgoLabel = new JLabel("Choose Algorithm:");
+        String[] memAlgos = {
+                "First Fit",
+                "Best Fit",
+                "Worst Fit"
+        };
+        JComboBox<String> memAlgoBox = new JComboBox<>(memAlgos);
+
+        JLabel blockSizesLabel = new JLabel("Enter Block Sizes (comma-separated):");
+        JTextField blockSizesField = new JTextField();
+
+        JLabel processSizesLabel = new JLabel("Enter Process Sizes (comma-separated):");
+        JTextField processSizesField = new JTextField();
+
+        JButton calculateMemoryButton = new JButton("Calculate");
+
+        memoryPanel.add(memAlgoLabel);
+        memoryPanel.add(memAlgoBox);
+        memoryPanel.add(blockSizesLabel);
+        memoryPanel.add(blockSizesField);
+        memoryPanel.add(processSizesLabel);
+        memoryPanel.add(processSizesField);
+        memoryPanel.add(new JLabel());
+        memoryPanel.add(calculateMemoryButton);
+
+        algorithmPanels.add(new JPanel(), "Empty");
+        algorithmPanels.add(processPanel, "Process Scheduling");
+        algorithmPanels.add(diskPanel, "Disk Scheduling");
+        algorithmPanels.add(pagePanel, "Page Replacement");
+        algorithmPanels.add(bankerPanel, "Banker's Algorithm");
+        algorithmPanels.add(memoryPanel, "Memory Allocation");
+
+        leftPanel.add(algorithmPanels, BorderLayout.CENTER);
+
+        splitPane.setLeftComponent(leftPanel);
+        splitPane.setRightComponent(outputScrollPane);
+
+        categoryBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String selectedCategory = (String) categoryBox.getSelectedItem();
+                if (selectedCategory != null) {
+                    switch (selectedCategory) {
+                        case "Process Scheduling":
+                            cardLayout.show(algorithmPanels, "Process Scheduling");
+                            break;
+                        case "Disk Scheduling":
+                            cardLayout.show(algorithmPanels, "Disk Scheduling");
+                            break;
+                        case "Page Replacement":
+                            cardLayout.show(algorithmPanels, "Page Replacement");
+                            break;
+                        case "Banker's Algorithm":
+                            cardLayout.show(algorithmPanels, "Banker's Algorithm");
+                            break;
+                        case "Memory Allocation":
+                            cardLayout.show(algorithmPanels, "Memory Allocation");
+                            break;
+                        default:
+                            cardLayout.show(algorithmPanels, "Empty");
+                            outputArea.setText("");
+                            break;
+                    }
+                }
+            }
+        });
+
+        calculateBankerButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    int numProcesses = Integer.parseInt(numProcessesField.getText().trim());
+                    int numResources = Integer.parseInt(numResourcesField.getText().trim());
+
+                    String[] allocationRows = allocationMatrixField.getText().split(",");
+                    String[] maxRows = maxMatrixField.getText().split(",");
+                    String[] availableValues = availableResourcesField.getText().trim().split(" ");
+
+                    if (allocationRows.length != numProcesses || maxRows.length != numProcesses) {
+                        outputArea.setText("Mismatch in number of processes and matrix rows.");
+                        return;
+                    }
+
+                    int[][] allocation = new int[numProcesses][numResources];
+                    int[][] max = new int[numProcesses][numResources];
+                    int[][] need = new int[numProcesses][numResources];
+                    int[] available = new int[numResources];
+
+                    for (int i = 0; i < numProcesses; i++) {
+                        String[] allocationValues = allocationRows[i].trim().split(" ");
+                        if (allocationValues.length != numResources) {
+                            outputArea.setText("Invalid number of resources in allocation row: " + (i + 1));
+                            return;
+                        }
+                        for (int j = 0; j < numResources; j++) {
+                            allocation[i][j] = Integer.parseInt(allocationValues[j]);
+                        }
+                    }
+
+                    for (int i = 0; i < numProcesses; i++) {
+                        String[] maxValues = maxRows[i].trim().split(" ");
+                        if (maxValues.length != numResources) {
+                            outputArea.setText("Invalid number of resources in max row: " + (i + 1));
+                            return;
+                        }
+                        for (int j = 0; j < numResources; j++) {
+                            max[i][j] = Integer.parseInt(maxValues[j]);
+                        }
+                    }
+
+                    if (availableValues.length != numResources) {
+                        outputArea.setText("Number of available resources doesn't match.");
+                        return;
+                    }
+                    for (int i = 0; i < numResources; i++) {
+                        available[i] = Integer.parseInt(availableValues[i]);
+                    }
+
+
+                    for (int i = 0; i < numProcesses; i++) {
+                        for (int j = 0; j < numResources; j++) {
+                            need[i][j] = max[i][j] - allocation[i][j];
+                        }
+                    }
+
+
+                    boolean[] finish = new boolean[numProcesses];
+                    int[] work = available.clone();
+                    int[] safeSeq = new int[numProcesses];
+                    int count = 0;
+
+                    while (count < numProcesses) {
+                        boolean found = false;
+
+                        for (int p = 0; p < numProcesses; p++) {
+                            if (!finish[p]) {
+                                boolean canProceed = true;
+                                for (int r = 0; r < numResources; r++) {
+                                    if (need[p][r] > work[r]) {
+                                        canProceed = false;
+                                        break;
+                                    }
+                                }
+
+                                if (canProceed) {
+                                    for (int r = 0; r < numResources; r++) {
+                                        work[r] += allocation[p][r];
+                                    }
+                                    safeSeq[count++] = p;
+                                    finish[p] = true;
+                                    found = true;
+                                }
+                            }
+                        }
+
+                        if (!found) {
+                            outputArea.setText("System is in an Unsafe State.");
+                            return;
+                        }
+                    }
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("The system is in a Safe State.\nSafe Sequence: ");
+                    for (int i = 0; i < numProcesses; i++) {
+                        sb.append("P").append(safeSeq[i]);
+                        if (i < numProcesses - 1) sb.append(" -> ");
+                    }
+                    outputArea.setText(sb.toString());
+
+                } catch (NumberFormatException ex) {
+                    outputArea.setText("Invalid input format. Please enter numbers correctly.");
+                } catch (Exception ex) {
+                    outputArea.setText("An unexpected error occurred: " + ex.getMessage());
+                }
+            }
+        });
+
+
+        calculateMemoryButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+
+                    String[] blockSizesInput = blockSizesField.getText().split(",");
+                    String[] processSizesInput = processSizesField.getText().split(",");
+
+                    int[] blockSizes = new int[blockSizesInput.length];
+                    int[] processSizes = new int[processSizesInput.length];
+
+                    for (int i = 0; i < blockSizesInput.length; i++) {
+                        blockSizes[i] = Integer.parseInt(blockSizesInput[i].trim());
+                    }
+
+                    for (int i = 0; i < processSizesInput.length; i++) {
+                        processSizes[i] = Integer.parseInt(processSizesInput[i].trim());
+                    }
+
+                    String selectedMemAlgo = (String) memAlgoBox.getSelectedItem();
+
+
+                    int[] allocation = new int[processSizes.length];
+                    for (int i = 0; i < allocation.length; i++) {
+                        allocation[i] = -1;
+                    }
+
+                    int totalInternalFragmentation = 0;
+
+                    // Algorithm Selection
+                    if (selectedMemAlgo.equals("First Fit")) {
+                        int[] blockCopy = blockSizes.clone();
+                        boolean[] blockUsed = new boolean[blockCopy.length];
+
+                        for (int i = 0; i < processSizes.length; i++) {
+                            for (int j = 0; j < blockCopy.length; j++) {
+                                if (blockCopy[j] >= processSizes[i] && allocation[i] == -1) {
+                                    allocation[i] = j + 1;
+                                    totalInternalFragmentation += (blockCopy[j] - processSizes[i]);
+                                    blockCopy[j] = -1;
+                                    blockUsed[j] = true;
+                                    break;
+                                }
+                            }
+                        }
+
+
+                        for (int j = 0; j < blockCopy.length; j++) {
+                            if (!blockUsed[j] && blockCopy[j] != -1) {
+                                totalInternalFragmentation += blockCopy[j];
+                            }
+                        }
+                    }
+
+                    else if (selectedMemAlgo.equals("Best Fit")) {
+                        int[] blockCopy = blockSizes.clone();
+                        boolean[] blockUsed = new boolean[blockCopy.length];
+
+                        for (int i = 0; i < processSizes.length; i++) {
+                            int bestIndex = -1;
+                            for (int j = 0; j < blockCopy.length; j++) {
+                                if (blockCopy[j] >= processSizes[i]) {
+                                    if (bestIndex == -1 || blockCopy[j] < blockCopy[bestIndex]) {
+                                        bestIndex = j;
+                                    }
+                                }
+                            }
+
+                            if (bestIndex != -1) {
+                                allocation[i] = bestIndex + 1;
+                                totalInternalFragmentation += (blockCopy[bestIndex] - processSizes[i]);
+                                blockCopy[bestIndex] = -1;
+                                blockUsed[bestIndex] = true;
+                            }
+                        }
+
+
+                        for (int j = 0; j < blockCopy.length; j++) {
+                            if (!blockUsed[j] && blockCopy[j] != -1) {
+                                totalInternalFragmentation += blockCopy[j];
+                            }
+                        }
+                    }
+
+                    else if (selectedMemAlgo.equals("Worst Fit")) {
+                        int[] blockCopy = blockSizes.clone();
+                        boolean[] blockUsed = new boolean[blockCopy.length];
+
+                        for (int i = 0; i < processSizes.length; i++) {
+                            int worstIndex = -1;
+                            for (int j = 0; j < blockCopy.length; j++) {
+                                if (blockCopy[j] >= processSizes[i]) {
+                                    if (worstIndex == -1 || blockCopy[j] > blockCopy[worstIndex]) {
+                                        worstIndex = j;
+                                    }
+                                }
+                            }
+
+                            if (worstIndex != -1) {
+                                allocation[i] = worstIndex + 1;
+                                totalInternalFragmentation += (blockCopy[worstIndex] - processSizes[i]);
+                                blockCopy[worstIndex] = -1;
+                                blockUsed[worstIndex] = true;
+                            }
+                        }
+
+                        // Add fragmentation from unused blocks
+                        for (int j = 0; j < blockCopy.length; j++) {
+                            if (!blockUsed[j] && blockCopy[j] != -1) {
+                                totalInternalFragmentation += blockCopy[j];
+                            }
+                        }
+                    }
+
+
+
+                    outputArea.setText("Action Performed:\n");
+                    for (int i = 0; i < processSizes.length; i++) {
+                        if (allocation[i] != -1) {
+                            outputArea.append("Process " + (i + 1) + " of size " + processSizes[i] +
+                                    " allocated to block " + allocation[i] + "\n");
+                        } else {
+                            outputArea.append("Process " + (i + 1) + " of size " + processSizes[i] + " not allocated\n");
+                        }
+                    }
+
+                    // Display Total Internal Fragmentation
+                    outputArea.append("\nTotal Internal Fragmentation: " + totalInternalFragmentation + " units\n");
+
+                } catch (NumberFormatException ex) {
+                    outputArea.setText("Invalid input format for Memory Allocation.");
+                }
+            }
+        });
+
+
+        calculateProcessButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+
+                    String selectedProcessAlgo = (String) processAlgoBox.getSelectedItem();
+
+                    String[] arrivalTimes = arrivalTimeField.getText().split(",");
+                    String[] burstTimes = burstTimeField.getText().split(",");
+                    int numProcesses = arrivalTimes.length;
+
+                    if (numProcesses != burstTimes.length) {
+                        outputArea.setText("Arrival times and Burst times must have the same number of entries.");
+                        return;
+                    }
+
+                    // Create Process array to store process data
+                    Process[] processes = new Process[numProcesses];
+                    for (int i = 0; i < numProcesses; i++) {
+                        int arrivalTime = Integer.parseInt(arrivalTimes[i].trim());
+                        int burstTime = Integer.parseInt(burstTimes[i].trim());
+                        processes[i] = new Process(i + 1, arrivalTime, burstTime);
+                    }
+
+
+                        if ("First Come First Serve (Non-Preemptive)".equals(selectedProcessAlgo)) {
+                            int currentTime = 0;
+                            int totalWaitingTime = 0;
+                            int totalTurnAroundTime = 0;
+
+                            StringBuilder result = new StringBuilder();
+                            result.append(String.format("%-15s%-15s%-15s%-15s%-15s%-15s\n",
+                                    "Process", "AT", "BT", "CT", "TAT", "WT"));
+                            result.append("-----------------------------------------------------------------------------------------\n");
+
+                            Arrays.sort(processes, Comparator.comparingInt(p -> p.arrivalTime));
+
+                            for (Process p : processes) {
+                                // If the CPU is idle, print the idle period
+                                if (currentTime < p.arrivalTime) {
+                                    result.append(String.format("CPU is idle from %d to %d\n", currentTime, p.arrivalTime));
+                                    currentTime = p.arrivalTime;
+                                }
+
+                                p.completionTime = currentTime + p.burstTime;
+                                p.turnAroundTime = p.completionTime - p.arrivalTime;
+                                p.waitingTime = p.turnAroundTime - p.burstTime;
+
+                                totalWaitingTime += p.waitingTime;
+                                totalTurnAroundTime += p.turnAroundTime;
+
+                                currentTime = p.completionTime;
+
+                                result.append(String.format("%-22d%-16d%-18d%-18d%-18d%-15d\n",
+                                        p.id, p.arrivalTime, p.burstTime, p.completionTime, p.turnAroundTime, p.waitingTime));
+                            }
+
+                            // Calculate and display average waiting time and turnaround time
+                            float avgWaitingTime = totalWaitingTime / (float) processes.length;
+                            float avgTurnAroundTime = totalTurnAroundTime / (float) processes.length;
+
+                            result.append("\nAverage Waiting Time: " + avgWaitingTime);
+                            result.append("\nAverage Turnaround Time: " + avgTurnAroundTime);
+
+                            // Display results in output area
+                            outputArea.setText(result.toString());
+                        }
+
+                        else if ("Priority (Non-Preemptive)".equals(selectedProcessAlgo)) {
+
+                            String[] priorities = priorityField.getText().split(",");
+                            if (numProcesses != priorities.length) {
+                                outputArea.setText("Arrival times, Burst times, and Priorities must have the same number of entries.");
+                                return;
+                            }
+
+                            for (int i = 0; i < numProcesses; i++) {
+                                processes[i].priority = Integer.parseInt(priorities[i].trim());
+                            }
+
+                            PriorityQueue<Process> pq = new PriorityQueue<>(Comparator.comparingInt((Process p) -> p.priority)
+                                    .thenComparingInt(p -> p.arrivalTime));
+
+                            int currentTime = 0, completed = 0;
+                            int totalWaitingTime = 0, totalTurnAroundTime = 0;
+                            boolean[] isCompleted = new boolean[numProcesses];
+
+                            StringBuilder result = new StringBuilder();
+                            result.append(String.format("%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n",
+                                    "Process", "AT", "BT", "Priority", "CT", "TAT", "WT"));
+                            result.append("--------------------------------------------------------------------------------------------\n");
+
+                            while (completed < numProcesses) {
+
+                                for (int i = 0; i < numProcesses; i++) {
+                                    if (!isCompleted[i] && processes[i].arrivalTime <= currentTime) {
+                                        pq.add(processes[i]);
+                                        isCompleted[i] = true;
+                                    }
+                                }
+
+                                if (pq.isEmpty()) {
+                                    currentTime++;
+                                    continue;
+                                }
+
+
+                                Process currentProcess = pq.poll();
+                                currentProcess.completionTime = Math.max(currentTime, currentProcess.arrivalTime) + currentProcess.burstTime;
+                                currentProcess.turnAroundTime = currentProcess.completionTime - currentProcess.arrivalTime;
+                                currentProcess.waitingTime = currentProcess.turnAroundTime - currentProcess.burstTime;
+
+                                totalWaitingTime += currentProcess.waitingTime;
+                                totalTurnAroundTime += currentProcess.turnAroundTime;
+
+                                currentTime = currentProcess.completionTime; // Update the time
+
+                                result.append(String.format("%-22d%-16d%-18d%-18d%-18d%-15d%-15d\n",
+                                        currentProcess.id, currentProcess.arrivalTime, currentProcess.burstTime, currentProcess.priority,
+                                        currentProcess.completionTime, currentProcess.turnAroundTime, currentProcess.waitingTime));
+
+                                completed++;
+                            }
+
+                            result.append("\nAverage Waiting Time: " + (totalWaitingTime / (float) numProcesses));
+                            result.append("\nAverage Turnaround Time: " + (totalTurnAroundTime / (float) numProcesses));
+
+                            outputArea.setText(result.toString());
+                        }
+
+                        else if ("Priority (Preemptive)".equals(selectedProcessAlgo)) {
+
+                            String[] priorities = priorityField.getText().split(",");
+                            if (numProcesses != priorities.length) {
+                                outputArea.setText("Arrival times, Burst times, and Priorities must have the same number of entries.");
+                                return;
+                            }
+
+
+                            for (int i = 0; i < numProcesses; i++) {
+                                processes[i].priority = Integer.parseInt(priorities[i].trim());
+                                processes[i].remainingTime = processes[i].burstTime;
+                            }
+
+                            int currentTime = 0, completed = 0;
+                            int totalWaitingTime = 0, totalTurnAroundTime = 0;
+                            boolean[] isCompleted = new boolean[numProcesses];
+
+                            StringBuilder result = new StringBuilder();
+                            result.append(String.format("%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n",
+                                    "Process", "AT", "BT", "Priority", "CT", "TAT", "WT"));
+                            result.append("--------------------------------------------------------------------------------------------\n");
+
+                            while (completed < numProcesses) {
+                                int idx = -1;
+                                int highestPriority = Integer.MAX_VALUE;
+
+                                for (int i = 0; i < numProcesses; i++) {
+                                    if (!isCompleted[i] && processes[i].arrivalTime <= currentTime) {
+                                        if (processes[i].priority < highestPriority) {
+                                            highestPriority = processes[i].priority;
+                                            idx = i;
+                                        }
+
+                                        else if (processes[i].priority == highestPriority) {
+                                            if (processes[i].arrivalTime < processes[idx].arrivalTime) {
+                                                idx = i;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (idx == -1) {
+                                    currentTime++;
+                                } else {
+                                    processes[idx].remainingTime--;
+                                    currentTime++;
+
+                                    if (processes[idx].remainingTime == 0) {
+                                        completed++;
+                                        processes[idx].completionTime = currentTime;
+                                        processes[idx].turnAroundTime = processes[idx].completionTime - processes[idx].arrivalTime;
+                                        processes[idx].waitingTime = processes[idx].turnAroundTime - processes[idx].burstTime;
+
+                                        totalWaitingTime += processes[idx].waitingTime;
+                                        totalTurnAroundTime += processes[idx].turnAroundTime;
+
+                                        isCompleted[idx] = true;
+
+                                        result.append(String.format("%-22d%-16d%-18d%-18d%-18d%-15d%-15d\n",
+                                                processes[idx].id, processes[idx].arrivalTime, processes[idx].burstTime, processes[idx].priority,
+                                                processes[idx].completionTime, processes[idx].turnAroundTime, processes[idx].waitingTime));
+                                    }
+                                }
+                            }
+
+                            result.append("\nAverage Waiting Time: " + (totalWaitingTime / (float) numProcesses));
+                            result.append("\nAverage Turnaround Time: " + (totalTurnAroundTime / (float) numProcesses));
+
+                            outputArea.setText(result.toString());
+                        }
+
+
+
+                        else if ("Shortest Job First (Non-Preemptive)".equals(selectedProcessAlgo)) {
+                        int n = processes.length;
+                        int totalWaitingTime = 0, totalTurnAroundTime = 0;
+                        int completed = 0, currentTime = 0;
+                        boolean[] isCompleted = new boolean[n];
+
+                        StringBuilder result = new StringBuilder();
+                        result.append(String.format("%-15s%-15s%-15s%-15s%-15s%-15s\n",
+                                "Process", "AT", "BT", "CT", "TAT", "WT"));
+                        result.append("-----------------------------------------------------------------------------------------\n");
+
+                        while (completed < n) {
+                            int idx = -1;
+                            int minBurst = Integer.MAX_VALUE;
+
+                            for (int i = 0; i < n; i++) {
+                                if (!isCompleted[i] && processes[i].arrivalTime <= currentTime) {
+                                    if (processes[i].burstTime < minBurst) {
+                                        minBurst = processes[i].burstTime;
+                                        idx = i;
+                                    }
+
+                                    else if (processes[i].burstTime == minBurst) {
+                                        if (processes[i].arrivalTime < processes[idx].arrivalTime) {
+                                            idx = i;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (idx == -1) {
+                                currentTime++;
+                            } else {
+                                Process p = processes[idx];
+                                p.completionTime = currentTime + p.burstTime;
+                                p.turnAroundTime = p.completionTime - p.arrivalTime;
+                                p.waitingTime = p.turnAroundTime - p.burstTime;
+
+                                totalWaitingTime += p.waitingTime;
+                                totalTurnAroundTime += p.turnAroundTime;
+
+                                currentTime = p.completionTime;
+                                isCompleted[idx] = true;
+                                completed++;
+
+                                result.append(String.format("%-22d%-16d%-18d%-18d%-18d%-15d\n",
+                                        p.id, p.arrivalTime, p.burstTime, p.completionTime, p.turnAroundTime, p.waitingTime));
+                            }
+                        }
+
+
+                        result.append("\nAverage Waiting Time: " + (totalWaitingTime / (float) n) + "\n");
+                        result.append("Average Turnaround Time: " + (totalTurnAroundTime / (float) n) + "\n");
+
+                        outputArea.setText(result.toString());
+                    }
+                        else if ("Shortest Job First (Preemptive)".equals(selectedProcessAlgo)) {
+                            int n = processes.length;
+                            int totalWaitingTime = 0, totalTurnAroundTime = 0;
+                            int completed = 0, currentTime = 0;
+                            int[] remainingBurstTime = new int[n];
+                            boolean[] isCompleted = new boolean[n];
+
+                            // Initialize remaining burst time
+                            for (int i = 0; i < n; i++) {
+                                remainingBurstTime[i] = processes[i].burstTime;
+                            }
+
+                            StringBuilder result = new StringBuilder();
+                            result.append(String.format("%-15s%-15s%-15s%-15s%-15s%-15s\n",
+                                    "Process", "AT", "BT", "CT", "TAT", "WT"));
+                            result.append("-----------------------------------------------------------------------------------------\n");
+
+                            while (completed < n) {
+                                int idx = -1;
+                                int minBurst = Integer.MAX_VALUE;
+
+                                for (int i = 0; i < n; i++) {
+                                    if (!isCompleted[i] && processes[i].arrivalTime <= currentTime) {
+                                        if (remainingBurstTime[i] < minBurst) {
+                                            minBurst = remainingBurstTime[i];
+                                            idx = i;
+                                        }
+
+                                        else if (remainingBurstTime[i] == minBurst) {
+                                            if (processes[i].arrivalTime < processes[idx].arrivalTime) {
+                                                idx = i;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (idx == -1) {
+                                    currentTime++;
+                                } else {
+                                    remainingBurstTime[idx]--;
+                                    currentTime++;
+
+                                    if (remainingBurstTime[idx] == 0) {
+                                        processes[idx].completionTime = currentTime;
+                                        processes[idx].turnAroundTime = processes[idx].completionTime - processes[idx].arrivalTime;
+                                        processes[idx].waitingTime = processes[idx].turnAroundTime - processes[idx].burstTime;
+
+                                        totalWaitingTime += processes[idx].waitingTime;
+                                        totalTurnAroundTime += processes[idx].turnAroundTime;
+
+                                        isCompleted[idx] = true;
+                                        completed++;
+
+                                        result.append(String.format("%-22d%-16d%-18d%-18d%-18d%-15d\n",
+                                                processes[idx].id, processes[idx].arrivalTime, processes[idx].burstTime,
+                                                processes[idx].completionTime, processes[idx].turnAroundTime, processes[idx].waitingTime));
+                                    }
+                                }
+                            }
+
+
+                            result.append("\nAverage Waiting Time: " + (totalWaitingTime / (float) n) + "\n");
+                            result.append("Average Turnaround Time: " + (totalTurnAroundTime / (float) n) + "\n");
+
+                            // Display results
+                            outputArea.setText(result.toString());
+                        }
+
+
+                        else if ("Round Robin (Preemptive)".equals(selectedProcessAlgo)) {
+                            int quantumTime = Integer.parseInt(quantumTimeField.getText().trim());
+
+                            if (quantumTime <= 0) {
+                                outputArea.setText("Time Quantum must be greater than 0.");
+                                return;
+                            }
+
+                            int n = numProcesses;
+                            int[] remainingBurstTimes = new int[n];
+                            int[] completionTime = new int[n];
+                            int[] waitingTime = new int[n];
+                            int[] turnAroundTime = new int[n];
+
+                            boolean[] isCompleted = new boolean[n];
+                            boolean[] inQueue = new boolean[n];
+
+                            Queue<Integer> queue = new LinkedList<>();
+                            int currentTime = 0, totalWaitingTime = 0, totalTurnAroundTime = 0;
+                            int completed = 0, index = 0;
+
+                            Process[] sortedProcesses = Arrays.copyOf(processes, n);
+                            Arrays.sort(sortedProcesses, Comparator.comparingInt(p -> p.arrivalTime));
+
+                            HashMap<Integer, Integer> processIndexMap = new HashMap<>();
+                            for (int i = 0; i < n; i++) {
+                                processIndexMap.put(sortedProcesses[i].id, i);
+                                remainingBurstTimes[i] = sortedProcesses[i].burstTime;
+                            }
+
+                            queue.add(0);
+                            inQueue[0] = true;
+
+                            StringBuilder result = new StringBuilder();
+                            result.append(String.format("%-15s%-15s%-15s%-15s%-15s%-15s\n",
+                                    "Process", "AT", "BT", "CT", "TAT", "WT"));
+                            result.append("-----------------------------------------------------------------------------------------\n");
+
+                            while (completed < n) {
+                                if (queue.isEmpty()) {
+
+                                    if (index < n) {
+                                        currentTime = sortedProcesses[index].arrivalTime;
+                                        queue.add(index);
+                                        inQueue[index] = true;
+                                        index++;
+                                    }
+                                    continue;
+                                }
+
+                                int i = queue.poll();
+                                int executionTime = Math.min(remainingBurstTimes[i], quantumTime);
+                                currentTime += executionTime;
+                                remainingBurstTimes[i] -= executionTime;
+
+                                if (remainingBurstTimes[i] == 0) {
+                                    completionTime[i] = currentTime;
+                                    turnAroundTime[i] = completionTime[i] - sortedProcesses[i].arrivalTime;
+                                    waitingTime[i] = turnAroundTime[i] - sortedProcesses[i].burstTime;
+                                    totalWaitingTime += waitingTime[i];
+                                    totalTurnAroundTime += turnAroundTime[i];
+                                    isCompleted[i] = true;
+                                    completed++;
+                                }
+
+                                while (index < n && sortedProcesses[index].arrivalTime <= currentTime) {
+                                    if (!isCompleted[index] && !inQueue[index]) {
+                                        queue.add(index);
+                                        inQueue[index] = true;
+                                    }
+                                    index++;
+                                }
+
+                                if (!isCompleted[i]) {
+                                    queue.add(i);
+                                }
+                            }
+
+
+                            for (int i = 0; i < n; i++) {
+                                int originalIndex = processIndexMap.get(sortedProcesses[i].id);
+                                result.append(String.format("%-22d%-16d%-18d%-18d%-18d%-15d\n",
+                                        sortedProcesses[i].id, sortedProcesses[i].arrivalTime, sortedProcesses[i].burstTime,
+                                        completionTime[originalIndex], turnAroundTime[originalIndex], waitingTime[originalIndex]));
+                            }
+
+                            result.append("\nAverage Waiting Time: " + String.format("%.2f", (totalWaitingTime / (float) n)));
+                            result.append("\nAverage Turnaround Time: " + String.format("%.2f", (totalTurnAroundTime / (float) n)));
+
+                            // Display results
+                            outputArea.setText(result.toString());
+                        }
+
+
+
+                } catch (NumberFormatException ex) {
+                    outputArea.setText("Invalid input format for Process Scheduling.");
+                }
+            }
+
+
+        });
+
+        calculateDiskButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    String selectedDiskAlgo = (String) diskAlgoBox.getSelectedItem();
+                    String[] requestSeqInput = requestSeqField.getText().split(",");
+                    int headPos = Integer.parseInt(headPosField.getText());
+                    int diskEnd = Integer.parseInt(endDiskField.getText());
+                    int[] requestSeq = new int[requestSeqInput.length];
+
+                    for (int i = 0; i < requestSeqInput.length; i++) {
+                        requestSeq[i] = Integer.parseInt(requestSeqInput[i]);
+                    }
+
+                    int totalSeekDistance = 0;
+                    int currentHead = headPos;
+                    outputArea.setText("Disk Scheduling Results (" + selectedDiskAlgo + "):\n");
+
+                    if (selectedDiskAlgo.equals("First Come First Serve (FCFS)")) {
+
+                        for (int req : requestSeq) {
+                            totalSeekDistance += Math.abs(req - currentHead);
+                            currentHead = req;
+                        }
+
+                    }
+                    else if (selectedDiskAlgo.equals("Shortest Seek Time First (SSTF)"))
+                    {
+
+
+                        boolean[] visited = new boolean[requestSeq.length];
+                        for (int i = 0; i < requestSeq.length; i++) {
+                            int closest = -1;
+                            int minDistance = Integer.MAX_VALUE;
+                            for (int j = 0; j < requestSeq.length; j++) {
+                                if (!visited[j] && Math.abs(requestSeq[j] - currentHead) < minDistance) {
+                                    closest = j;
+                                    minDistance = Math.abs(requestSeq[j] - currentHead);
+                                }
+                            }
+                            visited[closest] = true;
+                            totalSeekDistance += minDistance;
+                            currentHead = requestSeq[closest];
+                        }
+
+                    }
+                    else if (selectedDiskAlgo.contains("SCAN")) {
+
+                        Arrays.sort(requestSeq);
+                        boolean leftToRight = selectedDiskAlgo.contains("From left to right");
+
+                        if (leftToRight) {
+                            // Move towards the end disk first
+                            for (int i = 0; i < requestSeq.length; i++) {
+                                if (requestSeq[i] >= currentHead) {
+                                    totalSeekDistance += Math.abs(requestSeq[i] - currentHead);
+                                    currentHead = requestSeq[i];
+                                }
+                            }
+
+
+                            totalSeekDistance += Math.abs(diskEnd - currentHead);
+                            currentHead = diskEnd;
+
+
+                            for (int i = requestSeq.length - 1; i >= 0; i--) {
+                                if (requestSeq[i] < currentHead) {
+                                    totalSeekDistance += Math.abs(currentHead - requestSeq[i]);
+                                    currentHead = requestSeq[i];
+                                }
+                            }
+                        }
+
+                        else
+                        {
+                            for (int i = requestSeq.length - 1; i >= 0; i--) {
+                                if (requestSeq[i] <= currentHead) {
+                                    totalSeekDistance += Math.abs(requestSeq[i] - currentHead);
+                                    currentHead = requestSeq[i];
+                                }
+                            }
+
+                            // Hit track 0 before reversing
+                            totalSeekDistance += Math.abs(currentHead - 0);
+                            currentHead = 0;
+
+                            // Move right (process remaining requests)
+                            for (int i = 0; i < requestSeq.length; i++) {
+                                if (requestSeq[i] > headPos) {
+                                    totalSeekDistance += Math.abs(requestSeq[i] - currentHead);
+                                    currentHead = requestSeq[i];
+                                }
+                            }
+                        }
+                    }
+
+
+                     else if (selectedDiskAlgo.contains("C-SCAN")) {
+                        boolean leftToRight = selectedDiskAlgo.contains("From left to right");
+                        int initialHead = currentHead;
+                        totalSeekDistance = 0;
+                        if (leftToRight) {
+
+                            ArrayList<Integer> leftRequests = new ArrayList<>();
+                            ArrayList<Integer> rightRequests = new ArrayList<>();
+
+                            for (int i = 0; i < requestSeq.length; i++) {
+                                if (requestSeq[i] < initialHead) {
+                                    leftRequests.add(requestSeq[i]);
+                                } else {
+                                    rightRequests.add(requestSeq[i]);
+                                }
+                            }
+
+                            Collections.sort(leftRequests);
+                            Collections.sort(rightRequests);
+
+                            for (int i = 0; i < rightRequests.size(); i++) {
+                                totalSeekDistance += Math.abs(rightRequests.get(i) - currentHead);
+                                currentHead = rightRequests.get(i);
+                            }
+
+                            totalSeekDistance += Math.abs(diskEnd - currentHead);
+                            currentHead = 0;
+                            totalSeekDistance += diskEnd;
+
+                            for (int i = 0; i < leftRequests.size(); i++) {
+                                totalSeekDistance += Math.abs(leftRequests.get(i) - currentHead);
+                                currentHead = leftRequests.get(i);
+                            }
+                        }
+
+
+
+                        else
+                        {
+                            for (int i = requestSeq.length - 1; i >= 0; i--) {
+                                if (requestSeq[i] <= currentHead) {
+                                    totalSeekDistance += Math.abs(requestSeq[i] - currentHead);
+                                    currentHead = requestSeq[i];
+                                }
+                            }
+                            if (requestSeq[requestSeq.length - 1] != currentHead) {
+                                totalSeekDistance += Math.abs(currentHead - requestSeq[requestSeq.length - 1]);
+                                currentHead = requestSeq[requestSeq.length - 1];
+                            }
+                            for (int i = requestSeq.length - 2; i >= 0; i--) {
+                                totalSeekDistance += Math.abs(requestSeq[i] - currentHead);
+                                currentHead = requestSeq[i];
+                            }
+                        }
+                    }
+                        else if (selectedDiskAlgo.contains("LOOK")) {
+
+                        Arrays.sort(requestSeq);
+                        boolean leftToRight = selectedDiskAlgo.contains("From left to right");
+
+                        if (leftToRight) {
+                            for (int req : requestSeq) {
+                                if (req >= currentHead) {
+                                    totalSeekDistance += Math.abs(req - currentHead);
+                                    currentHead = req;
+                                }
+                            }
+                            for (int i = requestSeq.length - 1; i >= 0; i--) {
+                                if (requestSeq[i] < headPos) {
+                                    totalSeekDistance += Math.abs(requestSeq[i] - currentHead);
+                                    currentHead = requestSeq[i];
+                                }
+                            }
+                        } else {
+                            for (int i = requestSeq.length - 1; i >= 0; i--) {
+                                if (requestSeq[i] <= currentHead) {
+                                    totalSeekDistance += Math.abs(requestSeq[i] - currentHead);
+                                    currentHead = requestSeq[i];
+                                }
+                            }
+                            for (int i = 0; i < requestSeq.length; i++) {
+                                if (requestSeq[i] > headPos) {
+                                    totalSeekDistance += Math.abs(requestSeq[i] - currentHead);
+                                    currentHead = requestSeq[i];
+                                }
+                            }
+                        }
+
+                    }
+                        else if (selectedDiskAlgo.contains("C-LOOK")) {
+
+                        boolean leftToRight = selectedDiskAlgo.contains("From left to right");
+                        if (leftToRight) {
+
+                            ArrayList<Integer> requests = new ArrayList<>();
+                            for (int req : requestSeq) requests.add(req);
+                            Collections.sort(requests);
+
+                            ArrayList<Integer> right = new ArrayList<>();
+                            ArrayList<Integer> left = new ArrayList<>();
+
+                            for (int req : requests) {
+                                if (req >= currentHead) right.add(req);
+                                else left.add(req);
+                            }
+
+                            for (int req : right) {
+                                totalSeekDistance += Math.abs(req - currentHead);
+                                currentHead = req;
+                            }
+
+                            if (!left.isEmpty()) {
+                                totalSeekDistance += Math.abs(currentHead - left.get(0));
+                                currentHead = left.get(0);
+                            }
+
+                            for (int i = 0; i < left.size(); i++) {
+                                if (i == 0) continue;
+                                totalSeekDistance += Math.abs(left.get(i) - currentHead);
+                                currentHead = left.get(i);
+                            }
+                        }
+
+
+                        else {
+                            for (int i = requestSeq.length - 1; i >= 0; i--) {
+                                if (requestSeq[i] <= currentHead) {
+                                    totalSeekDistance += Math.abs(requestSeq[i] - currentHead);
+                                    currentHead = requestSeq[i];
+                                }
+                            }
+                            if (requestSeq[requestSeq.length - 1] != currentHead) {
+                                totalSeekDistance += Math.abs(currentHead - requestSeq[requestSeq.length - 1]);
+                                currentHead = requestSeq[requestSeq.length - 1];
+                            }
+                            for (int i = requestSeq.length - 2; i >= 0; i--) {
+                                totalSeekDistance += Math.abs(requestSeq[i] - currentHead);
+                                currentHead = requestSeq[i];
+                            }
+                        }
+                    }
+
+                    outputArea.append("Total Seek Distance: " + totalSeekDistance);
+
+                } catch (NumberFormatException ex) {
+                    outputArea.setText("Invalid input format for Disk Scheduling.");
+                }
+            }
+        });
+
+        calculatePageButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    String selectedPageAlgo = (String) pageAlgoBox.getSelectedItem();
+                    String[] pageRefSeq = pageRefSeqField.getText().split(",");
+                    int numFrames = Integer.parseInt(numFramesField.getText());
+
+                    int[] incomingStream = new int[pageRefSeq.length];
+                    for (int i = 0; i < pageRefSeq.length; i++) {
+                        incomingStream[i] = Integer.parseInt(pageRefSeq[i].trim());
+                    }
+
+                    outputArea.setText("Page Replacement Results:\n");
+
+                    int pageFaults = 0;
+
+                    if ("First In First Out (FIFO)".equals(selectedPageAlgo)) {
+
+                        HashSet<Integer> s = new HashSet<>(numFrames);
+                        Queue<Integer> queue = new LinkedList<>();
+
+                        for (int i = 0; i < incomingStream.length; i++) {
+                            if (s.size() < numFrames) {
+                                if (!s.contains(incomingStream[i])) {
+                                    s.add(incomingStream[i]);
+                                    queue.add(incomingStream[i]);
+                                    pageFaults++;
+                                }
+                            }
+                            else
+                            {
+                                if (!s.contains(incomingStream[i])) {
+                                    int val = queue.poll();
+                                    s.remove(val);
+                                    s.add(incomingStream[i]);
+                                    queue.add(incomingStream[i]);
+                                    pageFaults++;
+                                }
+                            }
+                        }
+                    }
+                    else if ("Least Recently Used (LRU)".equals(selectedPageAlgo)) {
+                        // LRU Implementation
+                        HashSet<Integer> s = new HashSet<>(numFrames);
+                        LinkedHashMap<Integer, Integer> lruMap = new LinkedHashMap<>(numFrames, 0.75f, true);
+
+                        for (int i = 0; i < incomingStream.length; i++) {
+                            if (!s.contains(incomingStream[i])) {
+                                if (s.size() == numFrames) {
+                                    int lruPage = lruMap.entrySet().iterator().next().getKey();
+                                    lruMap.remove(lruPage);
+                                    s.remove(lruPage);
+                                }
+                                s.add(incomingStream[i]);
+                                pageFaults++;
+                            }
+                            lruMap.put(incomingStream[i], i);
+                        }
+                    }
+                    else if ("Optimal".equals(selectedPageAlgo)) {
+                        // Optimal Implementation
+                        HashSet<Integer> s = new HashSet<>(numFrames);
+                        ArrayList<Integer> pages = new ArrayList<>(numFrames);
+
+                        for (int i = 0; i < incomingStream.length; i++) {
+                            if (!s.contains(incomingStream[i])) {
+                                if (s.size() == numFrames) {
+                                    int farthest = -1, index = -1;
+                                    for (int page : s) {
+                                        int nextUse = Integer.MAX_VALUE;
+                                        for (int j = i + 1; j < incomingStream.length; j++) {
+                                            if (incomingStream[j] == page) {
+                                                nextUse = j;
+                                                break;
+                                            }
+                                        }
+                                        if (nextUse > farthest) {
+                                            farthest = nextUse;
+                                            index = page;
+                                        }
+                                    }
+                                    s.remove(index);
+                                    pages.remove(Integer.valueOf(index));
+                                }
+                                s.add(incomingStream[i]);
+                                pages.add(incomingStream[i]);
+                                pageFaults++;
+                            }
+                        }
+                    }
+
+                    int hits = incomingStream.length - pageFaults;
+                    outputArea.append("\nPage faults: " + pageFaults);
+                    outputArea.append("\nPage fault Ratio: " + (double) pageFaults / incomingStream.length);
+                    outputArea.append("\nHits: " + hits);
+                    outputArea.append("\nHit Ratio: " + (double) hits / incomingStream.length);
+                } catch (NumberFormatException ex) {
+                    outputArea.setText("Invalid input format for Page Replacement.");
+                }
+            }
+        });
+
+        frame.setVisible(true);
+    }
+
+}
+
